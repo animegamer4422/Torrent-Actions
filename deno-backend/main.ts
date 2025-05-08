@@ -8,7 +8,7 @@ type Payload = {
 
 const GH_OWNER = "animegamer4422";
 const GH_REPO = "Torrent-Actions";
-const BRANCH = "main";
+const BRANCH = "Testing";
 const GH_PAT = Deno.env.get("GH_PAT");
 
 const corsHeaders = {
