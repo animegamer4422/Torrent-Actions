@@ -1,0 +1,62 @@
+name: Download Torrent and Upload to File.io
+
+on:
+  push:
+    branches:
+      - Testing
+    paths:
+      - 'queue/*.json'
+
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Set Up Node (for file parsing)
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install aria2c
+        run: sudo apt-get update && sudo apt-get install -y aria2
+
+      - name: Find Latest Magnet File
+        id: find-file
+        run: |
+          FILE=$(find queue -name '*.json' | sort | tail -n 1)
+          echo "file=$FILE" >> $GITHUB_OUTPUT
+
+      - name: Parse Magnet
+        id: parse
+        run: |
+          MAGNET=$(jq -r .magnet "${{ steps.find-file.outputs.file }}")
+          ID=$(jq -r .id "${{ steps.find-file.outputs.file }}")
+          echo "magnet=$MAGNET" >> $GITHUB_OUTPUT
+          echo "id=$ID" >> $GITHUB_OUTPUT
+
+      - name: Download Torrent
+        run: |
+          mkdir downloads
+          aria2c "${{ steps.parse.outputs.magnet }}" --dir=downloads --summary-interval=1
+
+      - name: Upload to file.io
+        id: upload
+        run: |
+          FILE=$(ls downloads | head -n 1)
+          curl -F "file=@downloads/$FILE" https://file.io -o result.json
+          DL_URL=$(jq -r .link result.json)
+          echo "url=$DL_URL" >> $GITHUB_OUTPUT
+
+      - name: Save Status
+        run: |
+          ID="${{ steps.parse.outputs.id }}"
+          URL="${{ steps.upload.outputs.url }}"
+          echo "{\"status\": \"completed\", \"progress\": 100, \"downloadUrl\": \"$URL\"}" > status/$ID.json
+          git config user.name "torrent-bot"
+          git config user.email "bot@example.com"
+          git add status/$ID.json
+          git commit -m "Status update for $ID"
+          git push
