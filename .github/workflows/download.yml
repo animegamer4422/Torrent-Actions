@@ -47,6 +47,7 @@ jobs:
             --enable-color=false \
             --disable-ipv6
             --seed-time=0
+            --bt-stop-timeout=0
 
       - name: Upload to file.io
         id: upload
