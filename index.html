@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dracula">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Torrent Downloader Demo</title>
+
+  <!-- DaisyUI CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css"/>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet" type="text/css"/>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    .toast { transition: all 0.3s ease-in-out; }
+    .hidden-toast { transform: translateY(-100px); opacity: 0; pointer-events: none; }
+  </style>
+</head>
+<body class="min-h-screen bg-base-100 text-base-content flex flex-col">
+
+  <!-- Navbar -->
+  <div class="navbar bg-base-100 shadow-sm px-4">
+    <a class="btn btn-ghost text-xl">Torrent UI</a>
+    <div class="ml-auto">
+      <!-- Theme Toggle (🌙 = dark, ☀️ = light) -->
+      <label class="flex cursor-pointer gap-2 items-center">
+        <span class="text-sm">🌙</span>
+        <input type="checkbox" class="toggle" id="themeToggle" />
+        <span class="text-sm">☀️</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastBox" class="toast toast-top toast-center hidden-toast">
+    <div class="alert alert-info"><span id="toastMessage">New torrent added.</span></div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="flex-1 p-6 space-y-6">
+
+    <!-- Magnet Input -->
+    <div class="flex flex-col items-center gap-3">
+      <input id="magnetInput" type="text" placeholder="Enter magnet or infohash"
+             class="input input-bordered w-4/5 max-w-xl"/>
+      <button onclick="handleDownload()" class="btn btn-md w-fit">Download</button>
+    </div>
+
+    <!-- Torrent File Picker -->
+    <fieldset class="fieldset flex flex-col items-center gap-2">
+      <legend class="fieldset-legend">Pick a torrent file</legend>
+      <input type="file" class="file-input w-4/5 max-w-xl" />
+      <label class="label">Max size 2MB</label>
+    </fieldset>
+
+    <!-- Download Progress -->
+    <div>
+      <label class="label">Download Progress</label>
+      <div class="flex items-center gap-4">
+        <progress id="linearProgress" class="progress progress-primary w-full" value="0" max="100"></progress>
+        <span id="progressLabel" class="text-sm w-12 text-right">0%</span>
+      </div>
+    </div>
+
+    <!-- Torrent List -->
+    <ul id="torrentList" class="list bg-base-100 rounded-box shadow-md space-y-4">
+      <li class="p-4 text-xs opacity-60 tracking-wide">Active Torrents</li>
+    </ul>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer p-4 bg-base-200 text-base-content footer-center">
+    <p>&copy; 2025 Torrent UI. Built with ❤️ using DaisyUI</p>
+  </footer>
+
+  <!-- JS -->
+  <script>
+    const toastBox = document.getElementById('toastBox');
+    const toastMessage = document.getElementById('toastMessage');
+    const progressBar = document.getElementById('linearProgress');
+    const progressLabel = document.getElementById('progressLabel');
+    const torrentList = document.getElementById('torrentList');
+    const themeToggle = document.getElementById('themeToggle');
+
+    let progress = 0;
+    let interval;
+
+    function showToast(message) {
+      toastMessage.textContent = message;
+      toastBox.classList.remove('hidden-toast');
+      setTimeout(() => toastBox.classList.add('hidden-toast'), 3000);
+    }
+
+    function handleDownload() {
+      const input = document.getElementById('magnetInput');
+      const value = input.value.trim();
+      if (!value) {
+        showToast("Please enter a valid magnet link or infohash.");
+        return;
+      }
+
+      showToast("Torrent added!");
+      addTorrentToList(value);
+      simulateProgress();
+      input.value = "";
+    }
+
+    function simulateProgress() {
+      progress = 0;
+      clearInterval(interval);
+      interval = setInterval(() => {
+        if (progress >= 100) {
+          clearInterval(interval);
+          showToast("Download complete!");
+        } else {
+          progress += 10;
+          progressBar.value = progress;
+          progressLabel.textContent = `${progress}%`;
+        }
+      }, 500);
+    }
+
+    function addTorrentToList(name) {
+      const li = document.createElement('li');
+      li.className = "list-row flex flex-col md:flex-row items-center gap-4 justify-between bg-base-200 p-4 rounded-box shadow";
+
+      li.innerHTML = `
+        <div class="flex items-center gap-4">
+          <img class="size-10 rounded-box" src="https://img.daisyui.com/images/profile/demo/1@94.webp"/>
+          <div>
+            <div>${name}</div>
+            <div class="text-xs uppercase font-semibold opacity-60">Downloading</div>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn btn-square btn-ghost" onclick="console.log('Paused ${name}')">⏸️</button>
+          <button class="btn btn-square btn-ghost" onclick="this.closest('li').remove()">❌</button>
+        </div>
+      `;
+      torrentList.appendChild(li);
+    }
+
+    // Theme toggle: retro (light) / dracula (dark)
+    themeToggle.addEventListener("change", () => {
+      document.documentElement.setAttribute("data-theme", themeToggle.checked ? "retro" : "dracula");
+    });
+  </script>
+
+</body>
+</html>
