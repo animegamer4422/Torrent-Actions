@@ -39,8 +39,13 @@ jobs:
 
       - name: Download Torrent
         run: |
-          mkdir downloads
-          aria2c "${{ steps.parse.outputs.magnet }}" --dir=downloads --summary-interval=1
+          mkdir -p downloads
+          aria2c "${{ steps.parse.outputs.magnet }}" \
+            --dir=downloads \
+            --summary-interval=1 \
+            --console-log-level=notice \
+            --enable-color=false \
+            --disable-ipv6
 
       - name: Upload to file.io
         id: upload
